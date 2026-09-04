@@ -1,9 +1,11 @@
-import express from 'express';
+﻿import express from 'express';
 import { close } from './db';
+import { claims } from './routes/claims';
 
 export const app = express();
 
 app.use(express.json({ limit: '1mb' }));
+app.use(claims);
 
 app.get('/healthz', (_req, res) => {
   res.json({ ok: true });
