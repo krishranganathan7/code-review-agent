@@ -3,8 +3,8 @@
 # `pull_request` (never `pull_request_target`): a fork PR then runs WITHOUT the
 # repository's secrets, so it simply will not review rather than handing AWS
 # credentials to code the fork author wrote. This job pip-installs and executes
-# the reviewer from the merge commit, so `pull_request_target` here would be
-# arbitrary code execution with a live credential in scope.
+# a reviewer, so `pull_request_target` here would be arbitrary code execution
+# with live credentials in scope.
 #
 # The reviewer does not vote on the PR. It posts findings as a COMMENT review and
 # reports the deterministic gate's verdict through this job's exit code:
@@ -29,6 +29,13 @@ concurrency:
 permissions:
   contents: read
   pull-requests: write
+
+env:
+  # The reviewer lives in its own private repository. Pinning to a branch means
+  # improvements land without touching this file, which is what a testing phase
+  # wants; pin to a tag once the behaviour needs to be reproducible.
+  REVIEWER_REPO: moder-mai/mai-code-review-agent
+  REVIEWER_REF: main
 
 jobs:
   review:
@@ -69,7 +76,14 @@ jobs:
           python-version: '3.11'
 
       - name: Install the reviewer
-        run: pip install --quiet -e "./tools/reviewer[bedrock]"
+        env:
+          # A fine-grained PAT with Contents:Read on REVIEWER_REPO. The built-in
+          # GITHUB_TOKEN is scoped to *this* repository and cannot read another
+          # one, so it cannot be used here. Actions masks registered secrets in
+          # logs, so the token stays hidden even though pip echoes the URL.
+          REVIEWER_REPO_TOKEN: ${{ secrets.REVIEWER_REPO_TOKEN }}
+        run: |
+          pip install --quiet "reviewer[bedrock] @             git+https://x-access-token:${REVIEWER_REPO_TOKEN}@github.com/${REVIEWER_REPO}.git@${REVIEWER_REF}"
 
       - name: Review
         env:
