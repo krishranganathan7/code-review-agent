@@ -1,9 +1,14 @@
+import cookieParser from 'cookie-parser';
 import express from 'express';
 import { close } from './db';
+import { authRouter } from './auth/routes';
 
 export const app = express();
 
 app.use(express.json({ limit: '1mb' }));
+app.use(cookieParser());
+
+app.use('/auth', authRouter);
 
 app.get('/healthz', (_req, res) => {
   res.json({ ok: true });
