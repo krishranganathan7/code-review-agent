@@ -38,14 +38,22 @@ jobs:
     if: github.event.pull_request.draft == false
 
     steps:
-      - name: Check out the pull request head
+      - name: Check out the pull request
         uses: actions/checkout@v4
         with:
-          # The reviewer materializes its sandbox with `git archive <head sha>`,
-          # so that exact commit has to be present locally.
-          ref: ${{ github.event.pull_request.head.sha }}
-          # Full history: `git_history` is one of the six search tools, and a
-          # shallow clone degrades it silently rather than failing.
+          # Deliberately the DEFAULT ref -- the pull request's merge commit --
+          # and not `head.sha`. The working tree has to carry `tools/reviewer/`,
+          # which lives on the base branch; a PR branch cut before the reviewer
+          # was vendored does not have it, and checking out the head would fail
+          # the install step on every such pull request.
+          #
+          # The reviewer does not read the working tree anyway: it materializes
+          # its own sandbox with `git archive <head sha>`, and that needs the
+          # commit as an *object*, not as a checkout. The merge commit's second
+          # parent is the head, so with full history it is present.
+          #
+          # Full history also matters because `git_history` is one of the six
+          # search tools, and a shallow clone degrades it silently.
           fetch-depth: 0
 
       - name: Install ripgrep
