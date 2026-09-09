@@ -2,3 +2,9 @@ node_modules/
 dist/
 *.log
 .env
+
+# vendored reviewer
+tools/reviewer/**/__pycache__/
+tools/reviewer/**/*.py[cod]
+tools/reviewer/src/*.egg-info/
+review-trace.json
