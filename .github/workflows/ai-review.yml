@@ -77,23 +77,25 @@ jobs:
 
       - name: Install the reviewer
         env:
-          # A read-only DEPLOY KEY, not a token. A deploy key is attached to the
-          # single repository it unlocks, so adding one needs admin on that repo
-          # and nothing from the organisation -- unlike a fine-grained PAT, which
-          # is scoped to a resource owner and needs the org to approve it. It is
-          # also the narrowest of the options: read-only, one repository, and
-          # revocable on its own.
+          # A CLASSIC personal access token with the `repo` scope.
           #
-          # The built-in GITHUB_TOKEN cannot be used at all here: it is scoped to
-          # the repository running the workflow and cannot read a second one.
-          REVIEWER_DEPLOY_KEY: ${{ secrets.REVIEWER_DEPLOY_KEY }}
+          # Not the built-in GITHUB_TOKEN: that is scoped to the repository
+          # running the workflow and cannot read a second one.
+          #
+          # Not a fine-grained PAT, and not a deploy key: `moder-mai` gates the
+          # first behind organisation approval and disables the second outright.
+          # A classic PAT belongs to the user rather than to a resource owner,
+          # so it needs nobody's approval -- at the cost of being broad. `repo`
+          # is the narrowest classic scope that can read a private repository,
+          # and it carries read AND write to every repository its owner can
+          # reach. Keep the expiry short and revoke it when the test is done;
+          # move to a fine-grained token or a deploy key once the org allows one.
+          #
+          # Actions masks registered secrets in logs, so the token does not
+          # appear even though pip echoes the URL it was given.
+          REVIEWER_REPO_TOKEN: ${{ secrets.REVIEWER_REPO_TOKEN }}
         run: |
-          mkdir -p ~/.ssh && chmod 700 ~/.ssh
-          # A trailing newline matters: OpenSSH rejects a key file without one.
-          printf '%s\n' "$REVIEWER_DEPLOY_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
-          pip install --quiet "reviewer[bedrock] @ git+ssh://git@github.com/${REVIEWER_REPO}.git@${REVIEWER_REF}"
+          pip install --quiet "reviewer[bedrock] @ git+https://x-access-token:${REVIEWER_REPO_TOKEN}@github.com/${REVIEWER_REPO}.git@${REVIEWER_REF}"
 
       - name: Review
         env:

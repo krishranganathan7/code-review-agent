@@ -15,18 +15,22 @@ Settings → Secrets and variables → Actions → *New repository secret*:
 |---|---|
 | `AWS_ACCESS_KEY_ID` | an IAM principal with `bedrock:InvokeModel` |
 | `AWS_SECRET_ACCESS_KEY` | its secret access key |
-| `REVIEWER_DEPLOY_KEY` | read-only **deploy key** private key for `moder-mai/mai-code-review-agent` |
+| `REVIEWER_REPO_TOKEN` | **classic** PAT with the `repo` scope, able to read `moder-mai/mai-code-review-agent` |
 
 `GITHUB_TOKEN` is provided by Actions — do not add it. It is scoped to this
 repository only and cannot read a second one, which is exactly why the deploy
 key is needed to reach the reviewer's repository.
 
-A deploy key rather than a token because it is attached to a single repository:
-adding one needs admin on `mai-code-review-agent` and nothing from the
-`moder-mai` organisation, and it grants read-only access to that one repo
-instead of everything the token holder can see. Add the **public** half under
-that repo's Settings → Deploy keys (leave write access unchecked); the
-**private** half is the secret here.
+A *classic* PAT specifically. The two narrower options are both unavailable:
+`moder-mai` gates fine-grained tokens behind organisation approval and disables
+deploy keys outright. A classic PAT belongs to the user rather than to a
+resource owner, so it needs nobody's approval.
+
+The cost is scope. `repo` is the narrowest classic scope that reads a private
+repository, and it grants read **and write** to every repository its owner can
+reach. Use a short expiry, revoke it when the test is finished, and replace it
+with a fine-grained token or a deploy key as soon as the organisation permits
+one.
 
 Also required: Settings → Actions → General → **Workflow permissions →
 "Read and write permissions"**. The job asks for `pull-requests: write` to post,
