@@ -15,11 +15,18 @@ Settings → Secrets and variables → Actions → *New repository secret*:
 |---|---|
 | `AWS_ACCESS_KEY_ID` | an IAM principal with `bedrock:InvokeModel` |
 | `AWS_SECRET_ACCESS_KEY` | its secret access key |
-| `REVIEWER_REPO_TOKEN` | fine-grained PAT, **Contents: Read** on `moder-mai/mai-code-review-agent` |
+| `REVIEWER_DEPLOY_KEY` | read-only **deploy key** private key for `moder-mai/mai-code-review-agent` |
 
 `GITHUB_TOKEN` is provided by Actions — do not add it. It is scoped to this
-repository only, which is exactly why `REVIEWER_REPO_TOKEN` is needed to reach
-the reviewer's repository.
+repository only and cannot read a second one, which is exactly why the deploy
+key is needed to reach the reviewer's repository.
+
+A deploy key rather than a token because it is attached to a single repository:
+adding one needs admin on `mai-code-review-agent` and nothing from the
+`moder-mai` organisation, and it grants read-only access to that one repo
+instead of everything the token holder can see. Add the **public** half under
+that repo's Settings → Deploy keys (leave write access unchecked); the
+**private** half is the secret here.
 
 Also required: Settings → Actions → General → **Workflow permissions →
 "Read and write permissions"**. The job asks for `pull-requests: write` to post,
