@@ -1,9 +1,11 @@
 import express from 'express';
 import { close } from './db';
+import { reports } from './routes/reports';
 
 export const app = express();
 
 app.use(express.json({ limit: '1mb' }));
+app.use(reports);
 
 app.get('/healthz', (_req, res) => {
   res.json({ ok: true });
